@@ -115,3 +115,44 @@ KAFKA_CREATE_TOPICS: "learning-topic-1:10:1"
 ```
 
 설정의 경우 순서대로 topic 이름, partition 갯수, replica 갯수를 의미한다.
+
+#### commands
+
+< Topic 관련 >
+
+kafka-topics.sh 를 통해 cli 에서 topic 에 대한 명령을 실행할 수 있다.
+
+``` sh 
+kafka-topics.sh --create --topic learning-topic-1 --bootstrap-server localhost:9092 --replication-factor 1 --partitions 10
+```
+
+<code>--create</code> 옵션을 통해 topic 을 생성할 수 있다. 뒤따라 오는 옵션은 옵션명과 동일한 의미의 옵션이며, 
+<code>--bootstarap.server</code>의 경우 대상이 될 Kafka cluster 를 지정하는 옵션이다.
+
+위의 Docker 설정으로 Kafka 를 구성했다면 <code>KAFKA_CREATE_TOPICS: "learning-topic-1:10:1"</code> 에서 이미 Topic 이 생성되었다.
+
+``` sh
+kafka-topics.sh --list --bootstrap-server localhost:9092
+kafka-topics.sh --describe --topic learning-topic-1 --bootstrap-server localhost:9092
+```
+
+위 Command 를 통해 각각 topic 의 목록과 상세정보를 조회 할 수 있다.
+
+< Producer & Consumer 관련 >
+
+``` sh
+# Producer
+kafka-console-producer.sh --topic learning-topic-1 --bootstrap-server localhost:9092
+
+# Consumer
+kafka-console-consumer.sh --topic learning-topic-1 --bootstrap-server localhost:9092 --from-beginning
+```
+
+<table>
+  <tr>
+    <td align="center"> <img src="./images/kafka-cli-pub-sub.jpg" width="100%" alt="PUB/SUB on CLI"/> </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center"> (왼) Producer / (오른) Consumer  </td>
+  </tr>
+</table>
