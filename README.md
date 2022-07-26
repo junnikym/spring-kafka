@@ -196,3 +196,29 @@ spring:
 <code>group-id</code> 는 Consumer Group 의 ID를 넣어주면된다.
 
 * ref : <https://blog.voidmainvoid.net/305>
+
+### Consumer
+
+``` java
+@Service
+public class KafkaSampleConsumerService {
+
+	@KafkaListener(topics = "learning-topic-1", groupId = "learning-kafka-group-1")
+	public void consumer(String message) throws IOException {
+		System.out.println("message > " + message);
+	}
+
+}
+```
+
+<code>@KafkaListener</code> annotation 을 붙여주게되면 해당 Method 는 설정된 topic 을 <code>consuming</code> 하게된다.
+
+<table>
+  <tr>
+    <td align="center"> <img src="./images/spring-kafka-consumer.jpg" width="100%" alt="PUB/SUB on CLI"/> </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center"> (왼) Spring / (오른) cli - Producer </td>
+  </tr>
+</table>
+
