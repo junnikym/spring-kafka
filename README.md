@@ -156,3 +156,43 @@ kafka-console-consumer.sh --topic learning-topic-1 --bootstrap-server localhost:
     <td width="50%" align="center"> (왼) Producer / (오른) Consumer  </td>
   </tr>
 </table>
+
+### Dependency
+
+* ref : https://docs.spring.io/spring-kafka/docs/current/reference/html/#introduction
+
+Spring Framework 에서 지원하는 <code>Spring for Apache Kafka</code>를 통해 Spring 에서 Kafka 를 쉽게 사용할 수 있다.
+
+``` gradle
+implementation 'org.springframework.kafka:spring-kafka'
+```
+
+### Configuration
+
+Application.yml 에 다음과 같이 설정함으로써 Spring 과 Kafka 를 연동할 수 있다.
+
+``` yaml
+spring:  
+    kafka:
+        
+        consumer:      
+            bootstrap-servers: 0.0.0.0:9092      
+            group-id: learning-kafka-group-1    
+            auto-offset-reset: earliest      
+            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer      
+            value-deserializer: org.apache.kafka.common.serialization.StringDeserializer    
+            
+        producer:      
+            bootstrap-servers: 0.0.0.0:9092      
+            key-serializer: org.apache.kafka.common.serialization.StringSerializer      
+            value-serializer: org.apache.kafka.common.serialization.StringSerializer
+```
+
+* ref : <https://oingdaddy.tistory.com/308>
+
+<code>auto-offset-reset</code> 설정은 <code>earliest</code> 와 <code>latest</code> 가 있으며 
+해당 설정을 통해 각각 가장 오래된 offset 부터, 가장 최근 offset 부터 소비하게된다.
+
+<code>group-id</code> 는 Consumer Group 의 ID를 넣어주면된다.
+
+* ref : <https://blog.voidmainvoid.net/305>
