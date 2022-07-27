@@ -215,10 +215,69 @@ public class KafkaSampleConsumerService {
 
 <table>
   <tr>
-    <td align="center"> <img src="./images/spring-kafka-consumer.jpg" width="100%" alt="PUB/SUB on CLI"/> </td>
+    <td align="center"> <img src="./images/spring-kafka-consumer.jpg" width="100%" alt="PUB on CLI, SUB on Spring"/> </td>
   </tr>
   <tr>
     <td width="50%" align="center"> (왼) Spring / (오른) cli - Producer </td>
   </tr>
 </table>
 
+* ref : <https://oingdaddy.tistory.com/308>
+
+### Producer
+
+``` java
+@Service
+public class KafkaSampleProducerService {
+
+	@Autowired
+	private KafkaTemplate<String, String> kafkaTemplate;
+
+	public KafkaSampleProducerService(KafkaTemplate<String, String> kafkaTemplate) {
+		this.kafkaTemplate = kafkaTemplate;
+	}
+
+	public void sendMessage(String message) {
+		System.out.println("[send] message >> " + message);
+		kafkaTemplate.send("learning-topic-1", message);
+	}
+
+}
+```
+
+<code>KafakTemplate</code> 의 <code>send()</code> Method 를 통해 손쉽게 원하는 Topic 에 Data 를 보낼 수 있다.
+
+``` java 
+@RestControllerpublic
+@required 
+class KafkaSampleProducerController {        
+        
+    private final KafkaSampleProducerService kafkaSampleProducerService;     
+    
+    @PostMapping(value = "/sendMessage")    
+    public void sendMessage(String message) {    	
+        kafkaSampleProducerService.sendMessage(message);    
+    }
+}
+```
+
+<table>
+    <tr>
+        <td align="left">
+            <pre>
+                [POST] http://localhost/api/v1/sample
+                Content-type: application/x-www-form-urlencoded
+                {
+                    "message" : "여기 메시지 입력"
+                }
+            </pre>
+        </td>
+        <td align="center"> <img src="./images/spring-kafka-producer.jpg" width="100%" alt="PUB/SUB on Spring"/> </td>
+    </tr>
+    <tr>
+        <td width="50%" align="center"> (왼) Spring / (오른) cli - Producer </td>
+        <td width="50%" align="center"> (왼) Spring / (오른) cli - Producer </td>
+    </tr>
+</table>
+
+* ref : <https://oingdaddy.tistory.com/308>
