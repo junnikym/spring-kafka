@@ -16,7 +16,7 @@ public class KafkaSampleProducerService {
 
 	public void sendMessage(String message) {
 		System.out.println("[send] message >> " + message);
-		kafkaTemplate.send("learning-kafka-group-1", message);
+		kafkaTemplate.send("learning-topic-1", message);
 	}
 
 }
