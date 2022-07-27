@@ -10,7 +10,7 @@ public class KafkaSampleConsumerService {
 
 	@KafkaListener(topics = "learning-topic-1", groupId = "learning-kafka-group-1")
 	public void consumer(String message) throws IOException {
-		System.out.println("message > " + message);
+		System.out.println("[recv] message << " + message);
 	}
 
 }
