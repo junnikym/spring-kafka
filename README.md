@@ -22,7 +22,7 @@ Broker 는 Consumer 의 처리량을 신경쓰지 않아도 된다.
 ### Kafka Broker & Cluster
 
  - <code>Kafka Broker</code>는 실행된 Kafka Application Server 중 1대를 의미
- - 3대 이상의 Broker로 <code>Cluster</code>를 구축할 수 있다.
+   - 3대 이상의 Broker로 <code>Cluster</code>를 구축할 수 있다.
 
 Cluster 는 <code>Zookeeper</code>와 연동을 해야한다. 이러한 Zookeeper의 역할은 Broker ID, Controller ID 등.. 메타데이터를 저장하는 역할을 한다.
 
@@ -72,9 +72,9 @@ Kafka Broker 는 파티션에 저장된 메시지를 파일 시스템에 저장�
 기본적으로 일정 시간이 지나면 파일을 다시 만들지만 일정 시간 전 1GB 를 넘을 경우에도 새파일을 만든다.
 
 * ref.1 : <https://www.youtube.com/watch?v=VJKZvOASvUA>
-* ref.2 : <https://medium.com/@umanking/카프카에-대해서-이야기-하기전에-먼저-data에-대해서-이야기해보자-d2e3ca2f3c2>
-* ref.3 : <https://jyeonth.tistory.com/30>
-* ref.4 : <https://soft.plusblog.co.kr/3?category=896352>
+  * ref.2 : <https://medium.com/@umanking/카프카에-대해서-이야기-하기전에-먼저-data에-대해서-이야기해보자-d2e3ca2f3c2>
+  * ref.3 : <https://jyeonth.tistory.com/30>
+  * ref.4 : <https://soft.plusblog.co.kr/3?category=896352>
 
 ## Spring Kafka
 
@@ -263,21 +263,49 @@ class KafkaSampleProducerController {
 
 <table>
     <tr>
-        <td align="left">
+        <td width="50%" align="left">
             <pre>
-                [POST] http://localhost/api/v1/sample
-                Content-type: application/x-www-form-urlencoded
-                {
-                    "message" : "여기 메시지 입력"
-                }
+[POST] http://localhost/api/v1/sample
+Content-type: application/x-www-form-urlencoded
+{
+    "message" : "여기 메시지 입력"
+}
             </pre>
         </td>
-        <td align="center"> <img src="./images/spring-kafka-producer.jpg" width="100%" alt="PUB/SUB on Spring"/> </td>
+        <td width="50%" align="center"> <img src="./images/spring-kafka-producer.jpg" width="100%" alt="PUB/SUB on Spring"/> </td>
     </tr>
     <tr>
-        <td width="50%" align="center"> (왼) Spring / (오른) cli - Producer </td>
-        <td width="50%" align="center"> (왼) Spring / (오른) cli - Producer </td>
+        <td align="center" colspan=2> (왼) Api / (오른) Log on Spring </td>
     </tr>
 </table>
 
 * ref : <https://oingdaddy.tistory.com/308>
+
+### Topic
+
+Spring 에서 <code>NewTopic</code> 를 Bean 으로 생성함으로써 kafka 에 새로운 Topic 을 생성할 수 있다. 
+
+``` java
+@Configuration
+public class kafkaSampleConfig {
+
+    @Bean
+    public NewTopic sampleTopic () {
+        return TopicBuilder
+            .name("learning-kafka-group-on-spring")
+            .partitions(10)
+            .replicas(1)
+            .build();
+    }
+
+} 
+```
+
+``` sh
+# in docker container
+> kafka-topics.sh --list --bootstrap-server localhost:9092
+
+__consumer_offsets
+learning-kafka-group-on-spring
+learning-topic-1
+```
