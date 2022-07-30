@@ -309,3 +309,54 @@ __consumer_offsets
 learning-kafka-group-on-spring
 learning-topic-1
 ```
+
+### Ways to send message
+
+#### 1. Fire-and-forget
+send() Method 로 메시지를 전송만 하고, 성공 또는 실패 여부에 따른 후처리를 진행하지 않는다. 
+그렇기 때문에 Message 가 유실될 가능성이 있다.
+
+#### 2. Sync send
+Message 를 동기적으로 처리, Message 가 전송되면 Future 객체가 반환된다. 
+Broker 로 부터 처리결과가 반환되기 때문에 성공여부를 알 수 있다.
+
+<code>RecordMetadata</code>를 Record 의 여러 정보를 받을 수 있다.
+
+``` java 
+producer.send(record).get();
+```
+
+다음과 같이 <code>get()</code> Method 가 호출될 시 작업이 완료될 때까지 대기하게된다.
+
+#### 3. Async send
+Broker 의 응답을 기달이지 않고 비동기로 처리한다. 
+<code>Callback Method</code> 를 활용하여 후처리를 진행한다.
+
+``` java
+private class ProducerCallback implements Callback {
+
+	@Override
+	public void onCompletion(RecordMetadata recordMetadata, Exception e) {
+		if (e != null) {
+			e.printStackTrace();	
+		}
+	}
+	
+}
+
+producer.send(record, new ProducerCallback());
+```
+
+다음과 같이 <code>send()</code> Method의 2번째 인자에 Callback 객체를 생성하게되면, 
+Callback 객체의 Method 를 호출하게되고, 
+이를 통해 후처리를 진행하게 된다.
+
+*ref : <https://rebeccajo.tistory.com/40>
+
+> 위에서는 KafkaListener를 통해 인자를 받을 때, 단순 Object 를 통해 데이터를 받았다.   
+> <code>ConsumerRecord</code>, <code>ProducerRecord</code>와 같은 객체로 데이터를 받을 경우, 
+> 단순 Message 외 partition, offset 등.. Record 의 여러 정보를 받아올 수 있다.
+> 
+> ```java
+> ConsumerRecord(topic = learning-topic-1, partition = 0, leaderEpoch = 0, offset = 0, CreateTime = 1659184389056, serialized key size = -1, serialized value size = 22, headers = RecordHeaders(headers = [], isReadOnly = false), key = null, value = 테스트!)
+> ```
