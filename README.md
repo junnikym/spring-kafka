@@ -360,3 +360,83 @@ Callback 객체의 Method 를 호출하게되고,
 > ```java
 > ConsumerRecord(topic = learning-topic-1, partition = 0, leaderEpoch = 0, offset = 0, CreateTime = 1659184389056, serialized key size = -1, serialized value size = 22, headers = RecordHeaders(headers = [], isReadOnly = false), key = null, value = 테스트!)
 > ```
+
+### Serialization & Deserialization
+Spring 에서 Kafka 에 Data 를 주고받기 위해 Serialization & Deserialization 을 진행하게 된다. 
+만약 DTO 를 Kafka 에 보내게 되면 JSON, ByteBuffer 등.. 의 형태로 Serialization 을 해주어야한다.
+
+```java
+public class KafkaByteSerializer implements Serializer {
+
+	@Override
+	public void configure (Map configs, boolean isKey) {
+		Serializer.super.configure(configs, isKey);
+	}
+
+	@Override
+	public byte[] serialize (String topic, Object data) {
+		try(
+				ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+				ObjectOutputStream objectStream = new ObjectOutputStream(byteStream);
+		) {
+			objectStream.writeObject(data);
+			objectStream.flush();
+			objectStream.close();
+			return byteStream.toByteArray();
+
+		} catch (Exception e) {
+			throw new SerializationException("Error when serializing to byte[] for kafka message");
+		}
+	}
+
+	@Override
+	public byte[] serialize (String topic, Headers headers, Object data) {
+		return Serializer.super.serialize(topic, headers, data);
+	}
+
+	@Override
+	public void close () {
+		Serializer.super.close();
+	}
+
+}
+```
+
+```java
+public class KafkaByteDeserializer<T> implements Deserializer<T> {
+
+	@Override
+	public void configure (Map<String, ?> configs, boolean isKey) {
+		Deserializer.super.configure(configs, isKey);
+	}
+
+	@Override
+	public T deserialize (String topic, byte[] data) {
+		try(
+				ByteArrayInputStream byteStream = new ByteArrayInputStream(data);
+				ObjectInputStream objectStream = new ObjectInputStream(byteStream);
+		) {
+			final T deserialized = (T) objectStream.readObject();
+			objectStream.close();
+			return deserialized;
+
+		} catch (Exception e) {
+			throw new SerializationException("Error when serializing to byte[] for kafka message");
+		}
+	}
+
+	@Override
+	public T deserialize (String topic, Headers headers, byte[] data) {
+		return Deserializer.super.deserialize(topic, headers, data);
+	}
+
+	@Override
+	public void close () {
+		Deserializer.super.close();
+	}
+}
+```
+
+위와 같이 <code>Serializer</code>, <code>Deserializer</code> Interface 를 상속받아 구현함으로써 Serialzer, Deserializer 를 Custom 할 수 있다.
+
+이를 <code>value-serializer</code>, <code>value-deserializer</code> 에 설정함으로써 custom 된 serializer, deserializer 를 활용할 수 있다.
