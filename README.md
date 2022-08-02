@@ -21,8 +21,8 @@ Broker 는 Consumer 의 처리량을 신경쓰지 않아도 된다.
 
 ### Kafka Broker & Cluster
 
- - <code>Kafka Broker</code>는 실행된 Kafka Application Server 중 1대를 의미
-   - 3대 이상의 Broker로 <code>Cluster</code>를 구축할 수 있다.
+- <code>Kafka Broker</code>는 실행된 Kafka Application Server 중 1대를 의미
+  - 3대 이상의 Broker로 <code>Cluster</code>를 구축할 수 있다.
 
 Cluster 는 <code>Zookeeper</code>와 연동을 해야한다. 이러한 Zookeeper의 역할은 Broker ID, Controller ID 등.. 메타데이터를 저장하는 역할을 한다.
 
@@ -49,7 +49,7 @@ Offset 0번은 Queue 에 쌓인지 가장 오래된 Data 이며 가장 높은 �
 만약 Topic 이 하나의 Partition 을 가진다면 순서가 보장된다. Partition 은 Queue 구조이기 때문이다.
 단, Topic 이 두개 이상의 Partition 을 가진다면 완전한 순서가 보장되지 않는다 두개의 Partition 이 Data 를 나누어 가지기 때문에 두개의 순서를 가지게 되는 셈이다.
 
- * Partition 설정 시 주의점은 Partition 은 한번 늘릴 시 절대로 줄일 수 없다. 따라서 운영중 Partition 을 늘릴때에는 신중하게 고민을 해보아야한다.
+* Partition 설정 시 주의점은 Partition 은 한번 늘릴 시 절대로 줄일 수 없다. 따라서 운영중 Partition 을 늘릴때에는 신중하게 고민을 해보아야한다.
 
 ### Consumer Group
 
@@ -365,78 +365,189 @@ Callback 객체의 Method 를 호출하게되고,
 Spring 에서 Kafka 에 Data 를 주고받기 위해 Serialization & Deserialization 을 진행하게 된다. 
 만약 DTO 를 Kafka 에 보내게 되면 JSON, ByteBuffer 등.. 의 형태로 Serialization 을 해주어야한다.
 
+<< DTO >>
 ```java
-public class KafkaByteSerializer implements Serializer {
+public class SampleMessageDto implements Serializable {
 
-	@Override
-	public void configure (Map configs, boolean isKey) {
-		Serializer.super.configure(configs, isKey);
-	}
+    private String message;
 
-	@Override
-	public byte[] serialize (String topic, Object data) {
-		try(
-				ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-				ObjectOutputStream objectStream = new ObjectOutputStream(byteStream);
-		) {
-			objectStream.writeObject(data);
-			objectStream.flush();
-			objectStream.close();
-			return byteStream.toByteArray();
+    public SampleMessageDto() {}
 
-		} catch (Exception e) {
-			throw new SerializationException("Error when serializing to byte[] for kafka message");
-		}
-	}
+    public SampleMessageDto(String message) {
+        this.message = message;
+    }
 
-	@Override
-	public byte[] serialize (String topic, Headers headers, Object data) {
-		return Serializer.super.serialize(topic, headers, data);
-	}
-
-	@Override
-	public void close () {
-		Serializer.super.close();
-	}
+    public String getMessage() {
+        return message;
+    }
 
 }
 ```
 
+<< Serializer >>
+```java
+public class KafkaByteSerializer implements Serializer {
+
+    @Override
+    public void configure (Map configs, boolean isKey) {
+        Serializer.super.configure(configs, isKey);
+    }
+
+    @Override
+    public byte[] serialize (String topic, Object data) {
+        try(
+                ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+                ObjectOutputStream objectStream = new ObjectOutputStream(byteStream);
+        ) {
+            objectStream.writeObject(data);
+            objectStream.flush();
+            objectStream.close();
+            return byteStream.toByteArray();
+
+        } catch (Exception e) {
+            throw new SerializationException("Error when serializing to byte[] for kafka message");
+        }
+    }
+
+    @Override
+    public byte[] serialize (String topic, Headers headers, Object data) {
+        return Serializer.super.serialize(topic, headers, data);
+    }
+
+    @Override
+    public void close () {
+        Serializer.super.close();
+    }
+
+}
+```
+
+<< Deserializer >>
 ```java
 public class KafkaByteDeserializer<T> implements Deserializer<T> {
 
-	@Override
-	public void configure (Map<String, ?> configs, boolean isKey) {
-		Deserializer.super.configure(configs, isKey);
-	}
+    @Override
+    public void configure (Map<String, ?> configs, boolean isKey) {
+        Deserializer.super.configure(configs, isKey);
+    }
 
-	@Override
-	public T deserialize (String topic, byte[] data) {
-		try(
-				ByteArrayInputStream byteStream = new ByteArrayInputStream(data);
-				ObjectInputStream objectStream = new ObjectInputStream(byteStream);
-		) {
-			final T deserialized = (T) objectStream.readObject();
-			objectStream.close();
-			return deserialized;
+    @Override
+    public T deserialize (String topic, byte[] data) {
+        try(
+                ByteArrayInputStream byteStream = new ByteArrayInputStream(data);
+                ObjectInputStream objectStream = new ObjectInputStream(byteStream);
+        ) {
+            final T deserialized = (T) objectStream.readObject();
+            objectStream.close();
+            return deserialized;
 
-		} catch (Exception e) {
-			throw new SerializationException("Error when serializing to byte[] for kafka message");
-		}
-	}
+        } catch (Exception e) {
+            throw new SerializationException("Error when serializing to byte[] for kafka message");
+        }
+    }
 
-	@Override
-	public T deserialize (String topic, Headers headers, byte[] data) {
-		return Deserializer.super.deserialize(topic, headers, data);
-	}
+    @Override
+    public T deserialize (String topic, Headers headers, byte[] data) {
+        return Deserializer.super.deserialize(topic, headers, data);
+    }
 
-	@Override
-	public void close () {
-		Deserializer.super.close();
-	}
+    @Override
+    public void close () {
+        Deserializer.super.close();
+    }
 }
 ```
 
 위와 같이 <code>Serializer</code>, <code>Deserializer</code> Interface 를 상속받아 구현함으로써 Serialzer, Deserializer 를 Custom 할 수 있다.
 
 이를 <code>value-serializer</code>, <code>value-deserializer</code> 에 설정함으로써 custom 된 serializer, deserializer 를 활용할 수 있다.
+
+```java
+@EnableKafka
+@Configuration
+public class KafkaSampleConsumerConfig {
+
+    @Value("${spring.kafka.consumer.bootstrap-servers}")
+    private String bootstrapAddress;
+
+    @Value("${spring.kafka.consumer.group-id}")
+    private String groupId;
+
+    @Bean
+    public ConsumerFactory<String, SampleMessageDto> consumerFactory() {
+        Map<String, Object> props = new HashMap<>();
+        props.put(
+                ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                bootstrapAddress
+        );
+        props.put(
+                ConsumerConfig.GROUP_ID_CONFIG,
+                groupId
+        );
+        props.put(
+                ConsumerConfig.AUTO_OFFSET_RESET_CONFIG,
+                "earliest"
+        );
+        props.put(
+                ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
+                StringDeserializer.class
+        );
+        props.put(
+                ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+                KafkaByteDeserializer.class
+        );
+
+        return new DefaultKafkaConsumerFactory<>(props);
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, SampleMessageDto> kafkaListenerContainerFactory() {
+
+        ConcurrentKafkaListenerContainerFactory<String, SampleMessageDto> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(consumerFactory());
+
+        return factory;
+    }
+
+}
+```
+
+``` java
+@EnableKafka
+@Configuration
+public class KafkaSampleProducerConfig {
+
+    @Value("${spring.kafka.producer.bootstrap-servers}")
+    private String bootstrapAddress;
+
+    @Bean
+    public ProducerFactory<String, SampleMessageDto> producerFactory() {
+        Map<String, Object> configProps = new HashMap<>();
+        configProps.put(
+                ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                bootstrapAddress);
+        configProps.put(
+                ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
+                StringSerializer.class);
+        configProps.put(
+                ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+                "edu.junnikym.springkafka.sample.common.serialization.KafkaByteSerializer"
+        );
+
+        return new DefaultKafkaProducerFactory<>(configProps);
+    }
+
+    @Bean
+    public KafkaTemplate<String, SampleMessageDto> kafkaTemplate(ProducerFactory<String, SampleMessageDto>  producerFactory) {
+        return new KafkaTemplate<String, SampleMessageDto> (producerFactory);
+    }
+
+}
+```
+
+위와 같이 Configuration Class 를 만들어 Serializer & Deserializer 를 지정해줄수도 있고,
+yml 또는 properties 파일의 <code>value-serializer</code>, <code>value-deserializer</code> 설정을 변경해주어도된다.
+
+또한 Configuration Class 를 사용시 위 예제의 KafkaSampleConsumerConfig 와 같이 <code>KafkaByteDeserializer.class</code> 로 설정해 주어도 되지만,
+아래 KafkaSampleProducerConfig 와 같이 <code>"edu.junnikym.springkafka.sample.common.serialization.KafkaByteSerializer"</code> 처럼 설정도 가능하다.
