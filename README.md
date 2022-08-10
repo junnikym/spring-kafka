@@ -551,3 +551,57 @@ yml 또는 properties 파일의 <code>value-serializer</code>, <code>value-deser
 
 또한 Configuration Class 를 사용시 위 예제의 KafkaSampleConsumerConfig 와 같이 <code>KafkaByteDeserializer.class</code> 로 설정해 주어도 되지만,
 아래 KafkaSampleProducerConfig 와 같이 <code>"edu.junnikym.springkafka.sample.common.serialization.KafkaByteSerializer"</code> 처럼 설정도 가능하다.
+
+## Kafka Streams
+
+Kafka Streams 는 Kafka 에서 공식적으로 지원하는 Java Library 이다.   
+Consumer 를 통해 Record 를 받아 처리하는것 보다 더 빠르고 안전하게 실시간으로 Data 를 처리하기 위해 Kafka Streams 가 등장했다.
+
+이러한 Kafka Streams 는 Kafka 에서 공식적으로 지원하는 만큼 Kafka 와 완벽하게 호환된다.   
+데이터 유실 또는 중복 처리가 되지 않는것을 보장하며 이벤트 처리 기능인 <code>Streams DSL</code>, <code>Processor API</code> 를 제공한다.
+
+또한 Kafka Stream을 사용하지 않을 경우, Spark Streaming 과 같은 것을 사용할 수 있다. 하지만 Cluster Manager, Resource Manager 등.. 이 필요하다.
+하지만 Kafka Stream 은 다른 것 필요없이 Streams Application 을 활용하여 모두 처리 가능하다.
+
+### On Spring
+
+``` gradle
+implementation 'org.springframework.kafka:spring-kafka'
+implementation 'org.apache.kafka:kafka-streams'
+```
+
+Kafka Streams 는 <code>@EnableKafkaStreams</code> 를 사용하여 Configuration Class 를 구성 할 수 있다.
+
+``` java
+@Configuration
+@EnableKafka
+@EnableKafkaStreams
+public class KafkaConfig {
+
+    @Value(value = "${spring.kafka.bootstrap-servers}")
+    private String bootstrapAddress;
+
+    @Bean(name = KafkaStreamsDefaultConfiguration.DEFAULT_STREAMS_CONFIG_BEAN_NAME)
+    KafkaStreamsConfiguration kStreamsConfig() {
+        Map<String, Object> props = new HashMap<>();
+        props.put(APPLICATION_ID_CONFIG, "streams-app");
+        props.put(BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
+        props.put(DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+        props.put(DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+
+        return new KafkaStreamsConfiguration(props);
+    }
+
+    // other config
+}
+```
+
+<code>KafkaStreamsDefaultConfiguration.DEFAULT_STREAMS_CONFIG_BEAN_NAME</code> 로 자동으로 Configuration 을 구성 할 수 있다.
+
+### Topology
+
+> 요소들(링크, 노드 등)을 물리적으로 연결해 놓은 것, 또는 그 연결 방식을 말한다.   
+> ref : <https://ko.wikipedia.org/wiki/네트워크_토폴로지>
+
+여기서 링크는 Stream, 노드는 Processor 로 대입하여 생각 할 수 있다.   
+Kafka Stremas 에서는 Topology 를 구성할 수 있게 지원하기 위해 앞서 언급한 <code>Streams DSL</code>, <code>Processor API</code> 를 제공한다.
